@@ -1,15 +1,47 @@
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: Service
 metadata:
-  name: mysql
+  name: mysql-hls
   namespace: expense
 spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: "ebs-expense-sc"
-  resources:
-    requests:
-      storage: 4Gi
+  clusterIP: None
+  selector:
+    component: mysql
+    project: expense
+    tier: db
+  ports:
+  - protocol: TCP
+    port: 3306 #service port
+    targetPort: 3306 #target port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-svc
+  namespace: expense
+spec:
+  selector:
+    component: mysql
+    project: expense
+    tier: db
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
+
+---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: mysql
+#   namespace: expense
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   storageClassName: "ebs-expense-sc"
+#   resources:
+#     requests:
+#       storage: 4Gi
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -34,13 +66,20 @@ spec:
       containers:
       - name: mysql
         image: avinbandela/mysql:v1.0
-        ports:
-        - containerPort: 3306
-          name: web
         volumeMounts:
         - name: mysql
           mountPath: /var/lib/mysql
-      volumes:
-      - name: mysql
-        persistentVolumeClaim:
-          claimName: mysql
+      # volumes:
+      # - name: mysql
+      #   persistentVolumeClaim:
+      #     claimName: mysql
+  # pvc declaration, it is mandatory
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "ebs-expense-sc"
+      resources:
+        requests:
+          storage: 1Gi
