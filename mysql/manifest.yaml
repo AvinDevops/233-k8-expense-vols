@@ -54,6 +54,7 @@ spec:
       component: mysql
       project: expense
       tier: db # has to match .spec.template.metadata.labels
+  serviceName: "mysql-hls"
   replicas: 2 # by default is 1
   template:
     metadata:
